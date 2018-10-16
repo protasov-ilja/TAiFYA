@@ -46,6 +46,9 @@ private:
 	void ReadMooreFromFile(std::ifstream& inputFile);
 	void UpdateTableOfStates();
 	void MinimizeStateMachine();
+	void AddNewEquivalenceClass(std::vector<EquivalenceClass>& equivalenceClasses, int newId, int newState);
+	void WriteMooreStateMachineFromFile(std::ofstream& outputFile);
+	void WriteMealyStateMachineFromFile(std::ofstream& outputFile);
 
 	StateMachineType _stateMachineType;
 	int _numberOfInputSignals;
