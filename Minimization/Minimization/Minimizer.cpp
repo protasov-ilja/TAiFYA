@@ -1,50 +1,30 @@
 #include "stdafx.h"
 #include "Minimizer.h"
 
-const std::string OUTPUT_FILE_NAME = "out.txt";
-const int MIN_NUMBER_OF_ACTIONS = 1;
-const int MIN_NUMBER_OF_INPUT_SIGNALS = 1;
-
-CMinimizer::CMinimizer(const std::string& fileName)
+CMinimizer::CMinimizer(const std::string& inputfileName)
 {
-	std::ifstream inputFile(fileName);
+	ReadStateMachinInfoFromFile(inputfileName);
+	CreateFirstTableOfEquivalentClasses();
+	UpdateTableOfStates();
+	MinimizeStateMachine();
+	CreateMinimizedStatesMachine();
+}
+
+void CMinimizer::ReadStateMachinInfoFromFile(const std::string& inputfileName)
+{
+	std::ifstream inputFile(inputfileName);
 	if (!inputFile.is_open())
 	{
-		std::cout << "Can't open the file!" << fileName << std::endl;
+		std::cout << "Can't open the file!" << inputfileName << std::endl;
 		return;
 	}
 
 	int type;
 	inputFile >> type;
-	if (!(type == StateMachineType::MOORE || type == StateMachineType::MEALY))
-	{
-		std::cout << type << "number is not MUR: 1 or MILLY: 2" << std::endl;
-		return;
-	}
-
 	_stateMachineType = (StateMachineType)type;
-
 	inputFile >> _numberOfInputSignals;
-	if (_numberOfInputSignals < MIN_NUMBER_OF_INPUT_SIGNALS)
-	{
-		std::cout << "number of states can't be negative number!" << std::endl;
-		return;
-	}
-
 	inputFile >> _numberOfActions;
-	if (_numberOfActions < MIN_NUMBER_OF_ACTIONS)
-	{
-		std::cout << "number of states can't be negative number!" << std::endl;
-		return;
-	}
-
 	inputFile >> _numberOfStates;
-	if (_numberOfStates < 0)
-	{
-		std::cout << "number of states can't be negative number!" << std::endl;
-		return;
-	}
-
 	if (_stateMachineType == StateMachineType::MEALY)
 	{
 		ReadMealyFromFile(inputFile);
@@ -53,18 +33,17 @@ CMinimizer::CMinimizer(const std::string& fileName)
 	{
 		ReadMooreFromFile(inputFile);
 	}
-
-	CreateFirstListOfEquivalenceClasses();
 }
 
 void CMinimizer::ReadMealyFromFile(std::ifstream& inputFile)
 {
-	for (int i = 0; i < _numberOfInputSignals; ++i)
+	for (size_t i = 0; i < _numberOfInputSignals; ++i)
 	{
 		std::vector<StateMachineState> statesLine(_numberOfStates);
-		for (int j = 0; j < _numberOfStates; ++j)
+		for (size_t j = 0; j < _numberOfStates; ++j)
 		{
 			inputFile >> statesLine[j].state >> statesLine[j].action;
+			statesLine[j].action--;
 		}
 
 		_initialStateMachine.push_back(statesLine);
@@ -73,19 +52,20 @@ void CMinimizer::ReadMealyFromFile(std::ifstream& inputFile)
 
 void CMinimizer::ReadMooreFromFile(std::ifstream& inputFile)
 {
-	std::vector<int> vactorOfActions(_numberOfStates);
-	for (int i = 0; i < _numberOfStates; ++i)
+	std::vector<int> vectorOfActions(_numberOfStates);
+	for (size_t i = 0; i < _numberOfStates; ++i)
 	{
-		inputFile >> vactorOfActions[i];
+		inputFile >> vectorOfActions[i];
+		vectorOfActions[i]--;
 	}
 
 	for (size_t i = 0; i < _numberOfInputSignals; ++i)
 	{
 		std::vector<StateMachineState> statesLine(_numberOfStates);
-		for (int j = 0; j < _numberOfStates; ++j)
+		for (size_t j = 0; j < _numberOfStates; ++j)
 		{
 			inputFile >> statesLine[j].state;
-			statesLine[j].action = vactorOfActions[j];
+			statesLine[j].action = vectorOfActions[j];
 		}
 
 		_initialStateMachine.push_back(statesLine);
@@ -96,14 +76,13 @@ CMinimizer::~CMinimizer()
 {
 }
 
-void CMinimizer::CreateFirstListOfEquivalenceClasses()
+void CMinimizer::CreateFirstTableOfEquivalentClasses()
 {
 	_equivalenceClassComponents = CreateEquivalenceClassComponents();
-
 	int id = 0;
-	for (int i = 0; i < _equivalenceClassComponents.size(); ++i)
+	for (size_t i = 0; i < _equivalenceClassComponents.size(); ++i)
 	{
-		for (int j = 0; j < _equivalenceClassComponents.size(); ++j)
+		for (size_t j = 0; j < _equivalenceClassComponents.size(); ++j)
 		{
 			if ((_equivalenceClassComponents[j].id != -1) && (_equivalenceClassComponents[i].states == _equivalenceClassComponents[j].states))
 			{
@@ -124,46 +103,27 @@ void CMinimizer::CreateFirstListOfEquivalenceClasses()
 			++id;
 		}
 	}
+}
 
-	// create table of states by using before created classes of equivalence
-	for (int i = 0; i < _initialStateMachine.size(); ++i)
-	{
-		for (int j = 0; j < _initialStateMachine[i].size(); ++j)
-		{
-			int newId = GetEquivalenceClassIdByState(_currEquivalenceClasses, _initialStateMachine[i][j].state);
-			if (newId != -1)
-			{
-				_equivalenceClassComponents[j].states[i] = newId;
-			}
-		}
-	}
-	std::cout << "START" << std::endl;
-	//create new class of equivalence
-	// fill/update table of states by using before created classes of equivalence
-	// check classes of equivalence
+void CMinimizer::MinimizeStateMachine()
+{
 	while (_prevEquivalenceClasses.size() != _currEquivalenceClasses.size())
 	{
 		_currEquivalenceClasses = GetNewVectorOfEquivalenceClasses(_currEquivalenceClasses);
 		UpdateTableOfStates();
-		std::cout << "CONTINUE" << std::endl;
 	}
-
-	std::cout << "STOP" << std::endl;
-
-	CreateMinimizedStatesMachine();
 }
 
 std::vector<EquivalenceClass> CMinimizer::GetNewVectorOfEquivalenceClasses(const std::vector<EquivalenceClass>& equiveClasses)
 {
 	_prevEquivalenceClasses = equiveClasses;
 	std::vector<EquivalenceClass> newEquivalenceClasses;
-	//create new class of equivalence
-	for (int i = 0; i < _prevEquivalenceClasses.size(); ++i)
+	for (size_t i = 0; i < _prevEquivalenceClasses.size(); ++i)
 	{
 		int testState = *_prevEquivalenceClasses[i].states.begin();
 		int currStateId = 0;
 		if (newEquivalenceClasses.size() != 0)
-		{ // lastId + 1;
+		{
 			currStateId = newEquivalenceClasses[newEquivalenceClasses.size() - 1].id + 1;
 		}
 
@@ -191,7 +151,7 @@ std::vector<EquivalenceClass> CMinimizer::GetNewVectorOfEquivalenceClasses(const
 							isNewPositionFound = true;
 						}
 					}
-					else // add new elem
+					else
 					{
 						EquivalenceClass equivalenceClass;
 						equivalenceClass.id = newId;
@@ -212,17 +172,14 @@ std::vector<EquivalenceClass> CMinimizer::GetNewVectorOfEquivalenceClasses(const
 		}
 	}
 
-	CreateMinimizedStatesMachine();
-
 	return newEquivalenceClasses;
 }
 
 void CMinimizer::UpdateTableOfStates()
 {
-	// fill/update table of states by using before created classes of equivalence
-	for (int i = 0; i < _initialStateMachine.size(); ++i)
+	for (size_t i = 0; i < _initialStateMachine.size(); ++i)
 	{
-		for (int j = 0; j < _initialStateMachine[i].size(); ++j)
+		for (size_t j = 0; j < _initialStateMachine[i].size(); ++j)
 		{
 			int newId = GetEquivalenceClassIdByState(_currEquivalenceClasses, _initialStateMachine[i][j].state);
 			if (newId != -1)
@@ -239,7 +196,7 @@ std::vector<EquivalenceClassComponent> CMinimizer::CreateEquivalenceClassCompone
 	for (int i = 0; i < _initialStateMachine[0].size(); ++i)
 	{
 		EquivalenceClassComponent component;
-		for (int j = 0; j < _initialStateMachine.size(); ++j)
+		for (size_t j = 0; j < _initialStateMachine.size(); ++j)
 		{
 			component.originState = i;
 			component.actions.push_back(_initialStateMachine[j][i].action);
@@ -254,7 +211,7 @@ std::vector<EquivalenceClassComponent> CMinimizer::CreateEquivalenceClassCompone
 
 int CMinimizer::GetEquivalenceClassIdByState(const std::vector<EquivalenceClass>& equivalenceClasses, int state)
 {
-	for (int k = 0; k < equivalenceClasses.size(); ++k)
+	for (size_t k = 0; k < equivalenceClasses.size(); ++k)
 	{
 		if (equivalenceClasses[k].states.count(state) != 0)
 		{
@@ -268,21 +225,10 @@ int CMinimizer::GetEquivalenceClassIdByState(const std::vector<EquivalenceClass>
 void CMinimizer::CreateMinimizedStatesMachine()
 {
 	std::vector<std::vector<StateMachineState>> minimilizeAutomat(_numberOfInputSignals);
-
-	/*for (int i = 0; i < _currEquivalenceClasses.size(); ++i)
-	{
-		for (auto elem : _currEquivalenceClasses[i].states)
-		{
-			std::cout << elem << " ";
-		}
-
-		std::cout << "|";
-	}
-	std::cout << std::endl;*/
-	for (int j = 0; j < _numberOfInputSignals; ++j)
+	for (size_t j = 0; j < _numberOfInputSignals; ++j)
 	{
 		std::vector<StateMachineState> stateMachineStates(_currEquivalenceClasses.size());
-		for (int i = 0; i < _currEquivalenceClasses.size(); ++i)
+		for (size_t i = 0; i < _currEquivalenceClasses.size(); ++i)
 		{
 			StateMachineState stateMachineState;
 			int currState = *_currEquivalenceClasses[i].states.begin();
@@ -294,16 +240,56 @@ void CMinimizer::CreateMinimizedStatesMachine()
 		minimilizeAutomat[j] = stateMachineStates;
 	}
 
-	//for (int i = 0; i < _numberOfInputSignals; ++i)
-	//{
-	//	for (int j = 0; j < _currEquivalenceClasses.size(); ++j)
-	//	{
-	//		std::cout << minimilizeAutomat[i][j].state << ":" << minimilizeAutomat[i][j].action << " ";
-	//	}
+	_minimizedStateMachine = minimilizeAutomat;
+}
 
-	//	std::cout << std::endl;
-	//}
+void CMinimizer::ShowMinimizedStateMachine(const std::string& outputFileName)
+{
+	std::ofstream outputFile(outputFileName);
+	if (!outputFile.is_open())
+	{
+		std::cout << "Cant open file " << outputFileName << " for writing" << std::endl;
+		return;
+	}
 
-	/*std::cout << std::endl;
-	std::cout << std::endl;*/
+	outputFile << (int)_stateMachineType << std::endl;
+	outputFile << _numberOfInputSignals << std::endl;
+	outputFile << _numberOfActions << std::endl;
+	outputFile << _minimizedStateMachine[0].size() << std::endl;
+	if (_stateMachineType == StateMachineType::MOORE)
+	{
+		for (size_t j = 0; j < _minimizedStateMachine[0].size(); ++j)
+		{
+			outputFile << ++_minimizedStateMachine[0][j].action << " ";
+		}
+
+		outputFile << std::endl;
+		for (size_t i = 0; i < _minimizedStateMachine.size(); ++i)
+		{
+			for (size_t j = 0; j < _minimizedStateMachine[i].size(); ++j)
+			{
+				outputFile << _minimizedStateMachine[i][j].state << " ";
+			}
+
+			outputFile << std::endl;
+		}
+	}
+	else
+	{
+		for (size_t i = 0; i < _minimizedStateMachine.size(); ++i)
+		{
+			for (size_t j = 0; j < _minimizedStateMachine[i].size(); ++j)
+			{
+				outputFile << _minimizedStateMachine[i][j].state << " " << ++_minimizedStateMachine[i][j].action << " ";
+			}
+
+			outputFile << std::endl;
+		}
+	}
+
+	if (!outputFile.flush())
+	{
+		std::cout << "Failed to save data on disk" << std::endl;
+		return;
+	}
 }

@@ -32,11 +32,12 @@ class CMinimizer
 {
 public:
 	CMinimizer(const std::string& fileName);
-	void ShowMinimilizeStateMachine();
+	void ShowMinimizedStateMachine(const std::string& outputFileName);
 	~CMinimizer();
 
 private:
-	void CreateFirstListOfEquivalenceClasses();
+	void ReadStateMachinInfoFromFile(const std::string& fileName);
+	void CreateFirstTableOfEquivalentClasses();
 	std::vector<EquivalenceClassComponent> CreateEquivalenceClassComponents();
 	int GetEquivalenceClassIdByState(const std::vector<EquivalenceClass>& equivalenceClasses, int state);
 	void CreateMinimizedStatesMachine();
@@ -44,6 +45,7 @@ private:
 	void ReadMealyFromFile(std::ifstream& inputFile);
 	void ReadMooreFromFile(std::ifstream& inputFile);
 	void UpdateTableOfStates();
+	void MinimizeStateMachine();
 
 	StateMachineType _stateMachineType;
 	int _numberOfInputSignals;
