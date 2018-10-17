@@ -37,13 +37,13 @@ void CMinimizer::ReadStateMachinInfoFromFile(const std::string& inputfileName)
 
 void CMinimizer::ReadMealyFromFile(std::ifstream& inputFile)
 {
-	for (size_t i = 0; i < _numberOfInputSignals; ++i)
+	for (int i = 0; i < _numberOfInputSignals; ++i)
 	{
 		std::vector<StateMachineState> statesLine(_numberOfStates);
-		for (size_t j = 0; j < _numberOfStates; ++j)
+		for (int j = 0; j < _numberOfStates; ++j)
 		{
 			inputFile >> statesLine[j].state >> statesLine[j].action;
-			statesLine[j].action--;
+			--statesLine[j].action;
 		}
 
 		_initialStateMachine.push_back(statesLine);
@@ -53,16 +53,16 @@ void CMinimizer::ReadMealyFromFile(std::ifstream& inputFile)
 void CMinimizer::ReadMooreFromFile(std::ifstream& inputFile)
 {
 	std::vector<int> vectorOfActions(_numberOfStates);
-	for (size_t i = 0; i < _numberOfStates; ++i)
+	for (int i = 0; i < _numberOfStates; ++i)
 	{
 		inputFile >> vectorOfActions[i];
-		vectorOfActions[i]--;
+		--vectorOfActions[i];
 	}
 
-	for (size_t i = 0; i < _numberOfInputSignals; ++i)
+	for (int i = 0; i < _numberOfInputSignals; ++i)
 	{
 		std::vector<StateMachineState> statesLine(_numberOfStates);
-		for (size_t j = 0; j < _numberOfStates; ++j)
+		for (int j = 0; j < _numberOfStates; ++j)
 		{
 			inputFile >> statesLine[j].state;
 			statesLine[j].action = vectorOfActions[j];
@@ -133,28 +133,7 @@ std::vector<EquivalenceClass> CMinimizer::GetNewVectorOfEquivalenceClasses(const
 			int verifableState = *it;
 			if (_equivalenceClassComponents[testState].states != _equivalenceClassComponents[verifableState].states)
 			{
-				int newId = currStateId + 1;
-				bool isNewPositionFound = false;
-				while (!isNewPositionFound)
-				{
-					if (newId < newEquivalenceClasses.size())
-					{
-						int nextState = *newEquivalenceClasses[newId].states.begin();
-						if (_equivalenceClassComponents[verifableState].states == _equivalenceClassComponents[nextState].states)
-						{
-							newEquivalenceClasses[newId].states.insert(verifableState);
-							_equivalenceClassComponents[verifableState].id = newEquivalenceClasses[newId].id;
-							isNewPositionFound = true;
-						}
-					}
-					else
-					{
-						AddNewEquivalenceClass(newEquivalenceClasses, newId, verifableState);
-						isNewPositionFound = true;
-					}
-
-					newId++;
-				}
+				DivideEquivalenceClass(newEquivalenceClasses, currStateId, verifableState);
 			}
 			else
 			{
@@ -165,6 +144,32 @@ std::vector<EquivalenceClass> CMinimizer::GetNewVectorOfEquivalenceClasses(const
 	}
 
 	return newEquivalenceClasses;
+}
+
+void CMinimizer::DivideEquivalenceClass(std::vector<EquivalenceClass>& equivalenceClasses, int prevStateId, int verifableState)
+{
+	int newStateId = prevStateId + 1;
+	bool isNewPositionFound = false;
+	while (!isNewPositionFound)
+	{
+		if (newStateId < equivalenceClasses.size())
+		{
+			int nextState = *equivalenceClasses[newStateId].states.begin();
+			if (_equivalenceClassComponents[verifableState].states == _equivalenceClassComponents[nextState].states)
+			{
+				equivalenceClasses[newStateId].states.insert(verifableState);
+				_equivalenceClassComponents[verifableState].id = equivalenceClasses[newStateId].id;
+				isNewPositionFound = true;
+			}
+		}
+		else
+		{
+			AddNewEquivalenceClass(equivalenceClasses, newStateId, verifableState);
+			isNewPositionFound = true;
+		}
+
+		newStateId++;
+	}
 }
 
 void CMinimizer::AddNewEquivalenceClass(std::vector<EquivalenceClass>& equivalenceClasses, int newId, int newState)
@@ -226,7 +231,7 @@ int CMinimizer::GetEquivalenceClassIdByState(const std::vector<EquivalenceClass>
 void CMinimizer::CreateMinimizedStatesMachine()
 {
 	std::vector<std::vector<StateMachineState>> minimilizeAutomat(_numberOfInputSignals);
-	for (size_t j = 0; j < _numberOfInputSignals; ++j)
+	for (int j = 0; j < _numberOfInputSignals; ++j)
 	{
 		std::vector<StateMachineState> stateMachineStates(_currEquivalenceClasses.size());
 		for (size_t i = 0; i < _currEquivalenceClasses.size(); ++i)
@@ -305,48 +310,48 @@ void CMinimizer::WriteMealyStateMachineFromFile(std::ofstream& outputFile)
 	}
 }
 
-void makeSimpleDot()
-{
-	using Edge = std::pair<int, int>;
-	using Graph = boost::adjacency_list<boost::vecS,
-		boost::vecS, boost::directedS,
-		boost::property<boost::vertex_color_t,
-			boost::default_color_type>,
-		boost::property<boost::edge_weight_t, double>>;
-	const int VERTEX_COUNT = 15;
-	std::vector<Edge> edges = {
-		{ 0, 4 },
-		{ 0, 6 },
-		{ 0, 1 },
-		{ 1, 6 },
-		{ 1, 11 },
-		{ 2, 6 },
-		{ 2, 9 },
-		{ 2, 11 },
-		{ 3, 4 },
-		{ 4, 5 },
-		{ 5, 8 },
-		{ 6, 7 },
-		{ 7, 8 },
-		{ 8, 13 },
-		{ 9, 10 },
-		{ 10, 13 },
-		{ 11, 12 },
-		{ 12, 13 },
-		{ 13, 14 },
-	};
-	std::vector<double> weights(edges.size());
-	std::fill(weights.begin(), weights.end(), 1.0);
-	weights[1] = 0.5;
-	weights[2] = 2.5;
-	weights[3] = 4.3;
-	Graph graph(edges.begin(), edges.end(), weights.begin(),
-		VERTEX_COUNT);
-
-	boost::dynamic_properties dp;
-	dp.property("weight", boost::get(boost::edge_weight, graph));
-	dp.property("label", boost::get(boost::edge_weight, graph));
-	dp.property("node_id", boost::get(boost::vertex_index, graph));
-	std::ofstream ofs("test.dot");
-	boost::write_graphviz_dp(ofs, graph, dp);
-}
+//void MakeSimpleDot()
+//{
+//	using Edge = std::pair<int, int>;
+//	using Graph = boost::adjacency_list<boost::vecS,
+//		boost::vecS, boost::directedS,
+//		boost::property<boost::vertex_color_t,
+//			boost::default_color_type>,
+//		boost::property<boost::edge_weight_t, double>>;
+//	const int VERTEX_COUNT = 15;
+//	std::vector<Edge> edges = {
+//		{ 0, 4 },
+//		{ 0, 6 },
+//		{ 0, 1 },
+//		{ 1, 6 },
+//		{ 1, 11 },
+//		{ 2, 6 },
+//		{ 2, 9 },
+//		{ 2, 11 },
+//		{ 3, 4 },
+//		{ 4, 5 },
+//		{ 5, 8 },
+//		{ 6, 7 },
+//		{ 7, 8 },
+//		{ 8, 13 },
+//		{ 9, 10 },
+//		{ 10, 13 },
+//		{ 11, 12 },
+//		{ 12, 13 },
+//		{ 13, 14 },
+//	};
+//	std::vector<double> weights(edges.size());
+//	std::fill(weights.begin(), weights.end(), 1.0);
+//	weights[1] = 0.5;
+//	weights[2] = 2.5;
+//	weights[3] = 4.3;
+//	Graph graph(edges.begin(), edges.end(), weights.begin(),
+//		VERTEX_COUNT);
+//
+//	boost::dynamic_properties dp;
+//	dp.property("weight", boost::get(boost::edge_weight, graph));
+//	dp.property("label", boost::get(boost::edge_weight, graph));
+//	dp.property("node_id", boost::get(boost::vertex_index, graph));
+//	std::ofstream ofs("test.dot");
+//	boost::write_graphviz_dp(ofs, graph, dp);
+//}

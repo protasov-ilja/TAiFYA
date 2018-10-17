@@ -49,6 +49,7 @@ private:
 	void AddNewEquivalenceClass(std::vector<EquivalenceClass>& equivalenceClasses, int newId, int newState);
 	void WriteMooreStateMachineFromFile(std::ofstream& outputFile);
 	void WriteMealyStateMachineFromFile(std::ofstream& outputFile);
+	void DivideEquivalenceClass(std::vector<EquivalenceClass>& equivalenceClasses, int prevStateId, int verifableState);
 
 	StateMachineType _stateMachineType;
 	int _numberOfInputSignals;
