@@ -1,7 +1,5 @@
 #pragma once
 
-//Mealy
-//Moore
 enum StateMachineType
 {
 	MOORE = 1,
@@ -33,6 +31,7 @@ class CMinimizer
 public:
 	CMinimizer(const std::string& fileName);
 	void ShowMinimizedStateMachine(const std::string& outputFileName);
+	void CreateDotFile();
 	~CMinimizer();
 
 private:
