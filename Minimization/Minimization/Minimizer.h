@@ -35,7 +35,7 @@ public:
 	~CMinimizer();
 
 private:
-	void ReadStateMachinInfoFromFile(const std::string& fileName);
+	void ReadStateMachineInfoFromFile(const std::string& fileName);
 	void CreateFirstTableOfEquivalentClasses();
 	std::vector<EquivalenceClassComponent> CreateEquivalenceClassComponents();
 	int GetEquivalenceClassIdByState(const std::vector<EquivalenceClass>& equivalenceClasses, int state);

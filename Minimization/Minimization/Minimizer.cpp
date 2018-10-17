@@ -3,14 +3,14 @@
 
 CMinimizer::CMinimizer(const std::string& inputfileName)
 {
-	ReadStateMachinInfoFromFile(inputfileName);
+	ReadStateMachineInfoFromFile(inputfileName);
 	CreateFirstTableOfEquivalentClasses();
 	UpdateTableOfStates();
 	MinimizeStateMachine();
 	CreateMinimizedStatesMachine();
 }
 
-void CMinimizer::ReadStateMachinInfoFromFile(const std::string& inputfileName)
+void CMinimizer::ReadStateMachineInfoFromFile(const std::string& inputfileName)
 {
 	std::ifstream inputFile(inputfileName);
 	if (!inputFile.is_open())
