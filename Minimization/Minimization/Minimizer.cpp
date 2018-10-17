@@ -43,7 +43,6 @@ void CMinimizer::ReadMealyFromFile(std::ifstream& inputFile)
 		for (int j = 0; j < _numberOfStates; ++j)
 		{
 			inputFile >> statesLine[j].state >> statesLine[j].action;
-			--statesLine[j].action;
 		}
 
 		_initialStateMachine.push_back(statesLine);
@@ -303,7 +302,7 @@ void CMinimizer::WriteMealyStateMachineFromFile(std::ofstream& outputFile)
 	{
 		for (size_t j = 0; j < _minimizedStateMachine[i].size(); ++j)
 		{
-			outputFile << _minimizedStateMachine[i][j].state << " " << ++_minimizedStateMachine[i][j].action << " ";
+			outputFile << _minimizedStateMachine[i][j].state << " " << _minimizedStateMachine[i][j].action << " ";
 		}
 
 		outputFile << std::endl;
