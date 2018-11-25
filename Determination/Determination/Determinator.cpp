@@ -13,10 +13,10 @@ CDeterminator::~CDeterminator()
 
 void CDeterminator::ReadStateMachineInfoFromFile(const std::string& inputfileName)
 {
-	std::ifstream inputFile(inputfileName);
+	std::ifstream inputFile(inputfileName + ".txt");
 	if (!inputFile.is_open())
 	{
-		std::cout << "Can't open the file for reading!" << inputfileName << std::endl;
+		std::cout << "Can't open the file for reading! " << inputfileName << std::endl;
 
 		return;
 	}
@@ -144,10 +144,10 @@ void CDeterminator::AddStateInFinalStates(StateMachineState state)
 
 void CDeterminator::ShowDeterminatedStateMachine(const std::string& outputFileName)
 {
-	std::ofstream outputFile(outputFileName);
+	std::ofstream outputFile(outputFileName + ".txt");
 	if (!outputFile.is_open())
 	{
-		std::cout << "Can't open the file for writing!" << outputFileName << std::endl;
+		std::cout << "Can't open the file for writing! " << outputFileName << std::endl;
 
 		return;
 	}
@@ -172,38 +172,33 @@ void CDeterminator::ShowDeterminatedStateMachine(const std::string& outputFileNa
 	}
 }
 
-void CDeterminator::CreateDotFile()
+void CDeterminator::CreateDotFile(const std::string& dotFileName)
 {
-	using Edge = std::pair<int, int>;
-	using Graph = boost::adjacency_list<boost::vecS,
-		boost::vecS, boost::directedS,
-		boost::property<boost::vertex_color_t,
-		boost::default_color_type>,
-		boost::property<boost::edge_weight_t, std::string>>;
+	std::ofstream dotFile(dotFileName + ".dot");
+	dotFile << "digraph DeterminatedStateMachine {" << std::endl;
+	for (size_t i = 0; i < _determinatedStateMachine.size(); ++i) 
+	{
+		if (_determinatedFinalStates.count(i)) 
+		{
+			dotFile << i << " [shape = box]" << std::endl;
+		}
+		else 
+		{
+			dotFile << i << std::endl;
+		}
+	}
 
-	std::vector<Edge> edges;
-	std::vector<std::string> weights(edges.size());
-	const int VERTEX_COUNT = _determinatedStateMachine.size();
 	for (size_t i = 0; i < _determinatedStateMachine.size(); ++i)
 	{
 		for (size_t j = 0; j < _determinatedStateMachine[i].size(); ++j)
 		{
 			if (_determinatedStateMachine[i][j].stateIndex != -1)
 			{
-				Edge edge(i, _determinatedStateMachine[i][j].stateIndex);
-				edges.push_back(edge);
-				weights.push_back(std::to_string(j));
+				dotFile << "	" << i << "->" << _determinatedStateMachine[i][j].stateIndex << "[label=" << j << ']' << std::endl;
 			}
 		}
 	}
 
-	Graph graph(edges.begin(), edges.end(), weights.begin(),
-		VERTEX_COUNT);
-
-	boost::dynamic_properties dp;
-	dp.property("weight", boost::get(boost::edge_weight, graph));
-	dp.property("label", boost::get(boost::edge_weight, graph));
-	dp.property("node_id", boost::get(boost::vertex_index, graph));
-	std::ofstream ofs("test.dot");
-	boost::write_graphviz_dp(ofs, graph, dp);
+	dotFile << "}";
+	dotFile.close();
 }

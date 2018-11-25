@@ -12,7 +12,7 @@ public:
 	CDeterminator(const std::string& inputfileName);
 	~CDeterminator();
 	void ShowDeterminatedStateMachine(const std::string& outputFileName);
-	void CreateDotFile();
+	void CreateDotFile(const std::string& dotFileName);
 
 private:
 	void ReadStateMachineInfoFromFile(const std::string& fileName);
