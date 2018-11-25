@@ -2,6 +2,16 @@
 
 struct StateMachineState
 {
+	StateMachineState(int index, std::set<int> sts)
+	{
+		states = sts;
+		stateIndex = index;
+	}
+
+	StateMachineState()
+	{
+	}
+
 	int stateIndex = -1;
 	std::set<int> states;
 };

@@ -77,6 +77,8 @@ void CDeterminator::DeterminateStateMachine()
 	std::queue<std::set<int>> statesQueue;
 	_statesList.insert(std::pair<std::set<int>, int>({ 0 }, 0));
 	std::set<int> set = { 0 };
+	StateMachineState st(0, set);
+	AddStateInFinalStates(st);
 	AddNewState(set, statesQueue);
 	while (statesQueue.size() != 0) 
 	{
@@ -153,7 +155,7 @@ void CDeterminator::ShowDeterminatedStateMachine(const std::string& outputFileNa
 	}
 
 	outputFile << _numberOfInputSignals << std::endl;
-	outputFile << _numberOfStates << std::endl;
+	outputFile << _determinatedStateMachine.size() << std::endl;
 	outputFile << _determinatedFinalStates.size() << std::endl;
 	for (auto finalState : _determinatedFinalStates)
 	{
@@ -161,11 +163,11 @@ void CDeterminator::ShowDeterminatedStateMachine(const std::string& outputFileNa
 	}
 
 	outputFile << std::endl;
-	for (int i = 0; i < _determinatedStateMachine.size(); ++i)
+	for (int i = 0; i < _determinatedStateMachine[0].size(); ++i)
 	{
-		for (int j = 0; j < _determinatedStateMachine[i].size(); ++j)
+		for (int j = 0; j < _determinatedStateMachine.size(); ++j)
 		{
-			outputFile << _determinatedStateMachine[i][j].stateIndex << " ";
+			outputFile << _determinatedStateMachine[j][i].stateIndex << " ";
 		}
 
 		outputFile << std::endl;
