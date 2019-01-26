@@ -1,0 +1,12 @@
+_Variable=123.12E+23.23 var 123 
+/*weewe*sfs*var*while**/
+var i = 0;
+for(j = 0; j < 12; ++j) 
+f o r va r
+var str = "12";
+var vara = 12 + 02.2;
+var x = 0;
+var h = 0hFFFFF
+ var o = 0o12072 
+var b = 0b01010 
+var he = 0hesrF   
