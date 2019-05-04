@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Lexer.lexer.utils
+﻿namespace Lexer.Lexer.Utils
 {
-    public class Util
+	public sealed class Utils
     {
 		public static bool IsSimbol(char simbol)
 		{

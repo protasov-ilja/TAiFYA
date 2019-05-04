@@ -1,135 +1,131 @@
-﻿using Lexer.lexer.enums;
-using Lexer.lexer.parsers;
-using Lexer.lexer.utils;
+﻿using Lexer.Lexer.Enums;
+using Lexer.Lexer.Parsers;
+using Lexer.Lexer.Tokens;
+using Lexer.Lexer.Utils;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 
-namespace Lexer.lexer
+namespace Lexer.Lexer
 {
-    class LexerManager
+	public sealed class LexerManager : ILexer
     {
-		private Dictionary<char, TokenType> m_delimeters = new Dictionary<char, TokenType>()
+		private StringsBuffer _stringBuffer;
+		private List<IParser> _stateMachines = new List<IParser>();
+		private int _currPos;
+		private int _currRow;
+		private Queue<Token> _tokens = new Queue<Token>();
+
+		public LexerManager(string fileName)
 		{
-			{ ' ' , TokenType.ERROR },
-			{ '.' , TokenType.ERROR }
-		};
-
-		private List<KeyValuePair<TokenType, string>> _tokens = new List<KeyValuePair<TokenType, string>>();
-
-		private StringsBuffer m_stringBuffer;
-
-		private IdentParser m_identParser;
-		private HexParser m_hexParser;
-		//private List<List<int>> m_octTable;
-		//private List<List<int>> m_binTable;
-		//private List<List<int>> m_dexTable;
-
-		private int m_startTokenPos;
-		private int m_currPos;
-
-		public LexerManager(String fileName)
-		{
-			try
+			using (StreamReader streamReader = new StreamReader(fileName, Encoding.Default))
 			{
-				using (StreamReader streamReader = new StreamReader(fileName, Encoding.Default))
+				_stringBuffer = new StringsBuffer(streamReader);
+				InitilizeStateMachines();
+				_currPos = 0;
+				_currRow = 0;
+				while (!_stringBuffer.IsFileEnded)
 				{
-					m_stringBuffer = new StringsBuffer(streamReader);
-					m_identParser = new IdentParser(m_stringBuffer, "var.txt");
-					m_hexParser = new HexParser(m_stringBuffer, "hex.txt");
-					TokenType t = TokenType.LOOP;
-					while (t != TokenType.ERROR)
+					var token = GetNextToken();
+					if (token.Type != TokenType.DELIMETER)
 					{
-						t = GetNextToken();
-						Console.WriteLine(t);
+						Console.WriteLine(token.ToString());
+						_tokens.Enqueue(token);
+					}
+
+					_currPos++;
+
+					if (_currPos >= _stringBuffer.CurrStringCount)
+					{
+						_currRow++;
+						_stringBuffer.GetNewString();
+						_currPos = 0;
 					}
 				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine(ex.Message);
 			}
 		}
 
-		private TokenType GetNextToken()
+		private void InitilizeStateMachines()
 		{
-			while (!m_stringBuffer.IsFileEnded)
+			_stateMachines.Add(new IdentParser(_stringBuffer, "var.txt"));
+			_stateMachines.Add(new HexParser(_stringBuffer, "hex.txt"));
+			_stateMachines.Add(new BinParser(_stringBuffer, "bin.txt"));
+			_stateMachines.Add(new OctParser(_stringBuffer, "oct.txt"));
+			_stateMachines.Add(new DexParser(_stringBuffer, "dex.txt"));
+		}
+
+		private Token GetNextToken()
+		{
+			if (!_stringBuffer.IsFileEnded)
 			{
-				for (; m_currPos < m_stringBuffer.CurrStringCount; ++m_currPos)
+				var startPos = _currPos;
+				var newPos = _currPos;
+				var tokenType = TokenType.UNCKNOWN;
+				foreach (var stateMachine in _stateMachines)
 				{
-					m_startTokenPos = m_currPos;
-					//var token = m_identParser.GetToken(ref m_startTokenPos, ref m_currPos);
-					//m_identParser.ResetState();
-					//if (token != TokenType.ERROR)
-					//{
-					//	Console.WriteLine(token + " : " + m_currPos);
+					tokenType = stateMachine.GetTokenType(startPos, ref newPos);
+					stateMachine.ResetState();
 
-					//	if (token == TokenType.IDENTIFIER)
-					//	{
-					//		//Console.WriteLine(m_startTokenPos + " c: " + m_currPos);
-					//		//var strToken = GetRawString(m_startTokenPos, m_currPos);
-					//		//Console.WriteLine(strToken);
-					//		//Console.WriteLine("++");
-					//		//if (strToken)
-					//		//{
-
-					//		//}
-
-					//	}
-
-					//	return token;
-					//}
-
-					var token = m_hexParser.GetToken(ref m_startTokenPos, ref m_currPos);
-					m_hexParser.ResetState();
-					if (token != TokenType.ERROR)
+					if (tokenType != TokenType.UNCKNOWN)
 					{
-						return token;
+						break;	
 					}
-				
-					m_startTokenPos++;
 				}
-				Console.WriteLine();
-				Console.WriteLine(m_startTokenPos);
-				m_currPos = 0;
-				if (m_stringBuffer.IsBufferSwitched)
+
+				var strToken = GetStringToken(startPos, newPos);
+				if (tokenType == TokenType.UNCKNOWN)
 				{
-					m_stringBuffer.ReadNewStr();
+					_currPos = newPos;
+					if (Config.Delimeters.ContainsKey(_stringBuffer.CurrString[startPos]))
+					{
+						tokenType = Config.Delimeters[_stringBuffer.CurrString[startPos]];
+					}
 				}
 				else
 				{
-					m_stringBuffer.SwitchStr(true);
+					_currPos = newPos - 1;
+					
+					if (tokenType == TokenType.VARIABLE)
+					{
+						if (Config.Identifiers.ContainsKey(strToken))
+						{
+							tokenType = Config.Identifiers[strToken];
+						}
+					}
 				}
+				
+				return new Token(strToken, tokenType, startPos, _currRow);
 			}
 
-			return TokenType.ERROR;
+			return new Token("END", TokenType.END, 0, _currRow);
 		}
 
-		private string GetRawString(int startPos, int currPos)
+		private string GetStringToken(int startPos, int endPos)
 		{
-			if (startPos < currPos)
+			var strLength = endPos - startPos;
+			if (strLength == 0)
 			{
-				//Console.WriteLine("++");
-				return m_stringBuffer.CurrSring.Substring(startPos, currPos);
-			}
-			else if (startPos > currPos)
-			{
-				var str = m_stringBuffer.CurrSring.Substring(0, currPos);
-				m_stringBuffer.SwitchStr(false);
-				str += m_stringBuffer.CurrSring.Substring(startPos, m_stringBuffer.CurrStringCount);
-				m_stringBuffer.SwitchStr(false);
-
-				return str;
+				return _stringBuffer.CurrString[startPos].ToString();
 			}
 
-			return m_stringBuffer.CurrSring[startPos].ToString();
+			return _stringBuffer.CurrString.Substring(startPos, strLength);
 		}
 
 		public bool IsVarDelimeter(char simbol)
 		{
-			return m_delimeters.ContainsKey(simbol);
+			return Config.Delimeters.ContainsKey(simbol);
+		}
+
+		public Token GetToken()
+		{
+			if (_tokens.Count != 0)
+			{
+				return _tokens.Dequeue();
+			}
+
+			return null;
 		}
 	}
 }

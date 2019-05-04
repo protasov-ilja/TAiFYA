@@ -1,5 +1,5 @@
-﻿using Lexer.lexer.enums;
-using Lexer.lexer.utils;
+﻿using Lexer.Lexer.Enums;
+using Lexer.Lexer.Utils;
 
 using System;
 using System.Collections.Generic;
@@ -7,20 +7,21 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Lexer.lexer.parsers
+namespace Lexer.Lexer.Parsers
 {
-    public abstract class Parser
+    public abstract class Parser : IParser
     {
-		protected List<List<int>> stateMachineTable;
-		protected StringsBuffer strBuffer;
-		protected int currState;
-		protected List<int> terminateStates;
+		public const int ErrorState = -1;
+		protected List<List<int>> _stateMachineTable;
+		protected StringsBuffer _strBuffer;
+		protected int _currState;
+		protected List<int> _terminateStates;
+		protected List<List<char>> _eventsList;
 
 		public Parser(StringsBuffer strBuffer, string fileName)
 		{
-			this.strBuffer = strBuffer;
-			stateMachineTable = GetStateMacineTableFromFile(fileName);
-			Console.WriteLine("Parser");
+			_strBuffer = strBuffer;
+			_stateMachineTable = GetStateMacineTableFromFile(fileName);
 		}
 
 		private List<List<int>> GetStateMacineTableFromFile(string fileName)
@@ -31,14 +32,21 @@ namespace Lexer.lexer.parsers
 				using (StreamReader streamReader = new StreamReader(fileName, Encoding.Default))
 				{
 					var line = streamReader.ReadLine();
-					terminateStates = Array.ConvertAll(line.Split(' '), int.Parse).ToList();
+					var eventsNumber = int.Parse(line);
+					_eventsList = new List<List<char>>();
+					for (var i = 0; i < eventsNumber; ++i)
+					{
+						line = streamReader.ReadLine();
+						_eventsList.Add(Array.ConvertAll(line.Split(' '), char.Parse).ToList());
+					}
+
+					line = streamReader.ReadLine();
+					_terminateStates = Array.ConvertAll(line.Split(' '), int.Parse).ToList();
 					while ((line = streamReader.ReadLine()) != null)
 					{
 						List<int> item = Array.ConvertAll(line.Split(' '), int.Parse).ToList();
 						table.Add(item);
 					}
-
-					Console.WriteLine("GetStateMacineTableFromFile");
 				}
 			}
 			catch (Exception ex)
@@ -49,82 +57,71 @@ namespace Lexer.lexer.parsers
 			return table;
 		}
 
-		public TokenType GetToken(ref int startPos, ref int currPos)
+		public TokenType GetTokenType(int startPos, ref int currPos)
 		{
 			var startIndex = startPos;
-			while (true)
+			var pos = startPos;
+			for (var i = startIndex; i < _strBuffer.CurrStringCount; ++i)
 			{
-				for (var i = startIndex; i < strBuffer.CurrStringCount; ++i)
+				pos = i;
+				var status = CheckState(_strBuffer.CurrString[pos]);
+				if (status == StateMachineStatus.END)
 				{
-					Console.Write(strBuffer.CurrSring[i]);
-					var status = CheckState(strBuffer.CurrSring[i]);
-					//Console.Write(status);
-					if (status == StateMachineStatus.END)
-					{
-						if (IsTerminalState())
-						{
-							currPos = i;
-							Console.Write("ChooseToken: ");
-							return ChooseToken();
-						}
-						else
-						{
-							return TokenType.ERROR;
-						}
-					}
-					else if (status == StateMachineStatus.ERROR)
-					{
-						return TokenType.ERROR;
-					}
-				}
-				Console.WriteLine();
+					currPos = pos;
 
-				startIndex = 0;
-				if (strBuffer.IsBufferSwitched)
-				{
-					strBuffer.ReadNewStr();
-					if (strBuffer.IsFileEnded)
-					{
-						if (IsTerminalState())
-						{
-							Console.Write("ChooseToken: ");
-							currPos = startIndex;
-							return ChooseToken();
-						}
-						else
-						{
-							return TokenType.ERROR;
-						}
-					}
+					return ChooseToken();
 				}
-				else
+				else if (status == StateMachineStatus.ERROR)
 				{
-					strBuffer.SwitchStr(true);
-					if (strBuffer.IsFileEnded)
-					{
-						if (IsTerminalState())
-						{
-							Console.Write("ChooseToken: ");
-							currPos = startIndex;
-							return ChooseToken();
-						}
-						else
-						{
-							return TokenType.ERROR;
-						}
-					}
+					return TokenType.UNCKNOWN;
 				}
+			}
+
+			if (IsTerminalState())
+			{
+				currPos = pos;
+
+				return ChooseToken();
+			}
+			else
+			{
+				return TokenType.UNCKNOWN;
 			}
 		}
 
 		public void ResetState()
 		{
-			currState = 0;
+			_currState = 0;
 		}
 
-		protected abstract StateMachineStatus CheckState(char simbol);
+		private StateMachineStatus CheckState(char simbol)
+		{
+			for (var i = 0; i < _stateMachineTable[_currState].Count; ++i)
+			{
+				var nextState = _stateMachineTable[_currState][i];
+				if (nextState != ErrorState && _eventsList[i].Contains(simbol))
+				{
+					_currState = nextState;
 
-		protected abstract bool IsTerminalState();
+					return StateMachineStatus.CONTINUE;
+				}
+			}
+
+			if (IsTerminalState())
+			{
+				if (Config.Delimeters.ContainsKey(simbol))
+				{
+					return StateMachineStatus.END;
+				}
+			}
+
+			return StateMachineStatus.ERROR;
+		}
+
+		private bool IsTerminalState()
+		{
+			return _terminateStates.Contains(_currState);
+		}
 
 		protected abstract TokenType ChooseToken();
 	}

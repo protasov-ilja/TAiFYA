@@ -16,6 +16,7 @@ void CMinimizer::ReadStateMachineInfoFromFile(const std::string& inputfileName)
 	if (!inputFile.is_open())
 	{
 		std::cout << "Can't open the file!" << inputfileName << std::endl;
+
 		return;
 	}
 
@@ -321,15 +322,31 @@ void CMinimizer::CreateDotFile()
 	std::vector<Edge> edges;
 	std::vector<std::string> weights(edges.size());
 	const int VERTEX_COUNT = _minimizedStateMachine[0].size();
-	for (size_t i = 0; i < _minimizedStateMachine[0].size(); ++i)
+	if (_stateMachineType == StateMachineType::MOORE)
 	{
-		for (size_t j = 0; j < _minimizedStateMachine.size(); ++j)
+		for (size_t i = 0; i < _minimizedStateMachine[0].size(); ++i)
 		{
-			Edge edge(i, _minimizedStateMachine[j][i].state);
-			edges.push_back(edge);
-			weights.push_back(std::to_string(j) + "/" + std::to_string(_minimizedStateMachine[j][i].action));
+			for (size_t j = 0; j < _minimizedStateMachine.size(); ++j)
+			{
+				Edge edge(i, _minimizedStateMachine[j][i].state);
+				edges.push_back(edge);
+				weights.push_back(std::to_string(j) + "/" + std::to_string(_minimizedStateMachine[j][i].action));
+			}
 		}
 	}
+	else
+	{
+		for (size_t i = 0; i < _minimizedStateMachine[0].size(); ++i)
+		{
+			for (size_t j = 0; j < _minimizedStateMachine.size(); ++j)
+			{
+				Edge edge(i, _minimizedStateMachine[j][i].state);
+				edges.push_back(edge);
+				weights.push_back(std::to_string(j) + "/" + std::to_string(_minimizedStateMachine[j][i].action));
+			}
+		}
+	}
+	
 
 	Graph graph(edges.begin(), edges.end(), weights.begin(),
 		VERTEX_COUNT);

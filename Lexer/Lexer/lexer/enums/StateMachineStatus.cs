@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Lexer.lexer.enums
+﻿namespace Lexer.Lexer.Enums
 {
     public enum StateMachineStatus
     {

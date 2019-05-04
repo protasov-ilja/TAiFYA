@@ -1,12 +1,13 @@
-_Variable=123.12E+23.23 var 123 
+123
+a+b; 2+fghjkl4567890-1234567890-zxcvbnm,.4567890-=nm,./67890-=uiop[]jkl;'3;
+_Variable=123.12E+23var 123
 /*weewe*sfs*var*while**/
-var i = 0;
-for(j = 0; j < 12; ++j) 
+var+ i = 0;
+for(j = 0; j < 12; ++j)
 f o r va r
-var str = "12";
-var vara = 12 + 02.2;
+var+ str = "12";
+var vara = 12 + 02.2; 
 var x = 0;
-var h = 0hFFFFF
- var o = 0o12072 
-var b = 0b01010 
-var he = 0hesrF   
+var h = 0hFFFFF;
+var b = 0b01010+
+var o = 0o1234567-
