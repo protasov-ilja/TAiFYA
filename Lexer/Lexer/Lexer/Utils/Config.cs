@@ -1,4 +1,5 @@
 ﻿using Lexer.Lexer.Enums;
+
 using System.Collections.Generic;
 
 namespace Lexer.Lexer.Utils

@@ -1,6 +1,8 @@
 ﻿using Lexer.Lexer;
 using Lexer.Lexer.Tokens;
+
 using SyntacticalAnalyzer.Analizer.Parsers;
+
 using System;
 using System.Collections.Generic;
 
