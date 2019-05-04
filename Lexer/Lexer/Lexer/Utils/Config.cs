@@ -12,6 +12,7 @@ namespace Lexer.Lexer.Utils
 			{ '\n', TokenType.DELIMETER },
 			{ '.', TokenType.DOT },
 			{ ';', TokenType.SEMICOLON },
+			{ ':', TokenType.COLON },
 			{ ',', TokenType.COMMA },
 			{ '/', TokenType.OPERATOR },
 			{ '+', TokenType.OPERATOR },

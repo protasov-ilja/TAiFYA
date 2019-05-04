@@ -8,15 +8,15 @@ namespace SyntacticalAnalyzer.Analizer.Parsers
 	{
 		private readonly HashSet<TokenType> _validTokens = new HashSet<TokenType>
 		{
-			TokenType.INT_NUMBER, TokenType.OCT_NUMBER, TokenType.HEX_NUMBER, TokenType.FLOAT_NUMBER, TokenType.E_NUMBER, TokenType.BIN_NUMBER
+			
 		};
 
 		protected override bool IsValide()
 		{
 			return IsToken(TokenType.VAR_IDENTIFIER)
+				&& IsToken(TokenType.IDENTIFIER)
+				&& IsToken(TokenType.COLON)
 				&& IsIdList()
-				&& IsToken(TokenType.EQUALITY_OPERATOR)
-				&& IsTokenInSet(_validTokens)
 				&& IsToken(TokenType.SEMICOLON);
 		}
 	}

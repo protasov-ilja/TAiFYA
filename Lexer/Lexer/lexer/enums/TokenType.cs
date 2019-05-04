@@ -27,6 +27,7 @@
 		E_NUMBER, // 12.12E+(-)32.2
 		BOOL_OPERATOR, // false true
 		SEMICOLON, // ;
+		COLON, // :
 		HEX_NUMBER, // 0h123FF
 		BIN_NUMBER, // 0b010100
 		OCT_NUMBER, // 0o1234567
