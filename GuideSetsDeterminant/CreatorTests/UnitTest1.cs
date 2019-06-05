@@ -22,7 +22,7 @@ namespace CreatorTests
 
 			GuideSetCreator creator = new GuideSetCreator(list);
 
-			Assert.AreEqual(creator._sentences[0].ForwardSet[0], R1[0]);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet[0], R1[0]);
 		}
 
 		[TestMethod]
@@ -38,8 +38,8 @@ namespace CreatorTests
 
 			GuideSetCreator creator = new GuideSetCreator(list);
 
-			Assert.AreEqual(creator._sentences[0].ForwardSet[0], R2[0]);
-			Assert.AreEqual(creator._sentences[1].ForwardSet[0], R2[0]);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet[0], R2[0]);
+			Assert.AreEqual(creator.Sentences[1].ForwardSet[0], R2[0]);
 		}
 
 		[TestMethod]
@@ -57,15 +57,13 @@ namespace CreatorTests
 			};
 
 			GuideSetCreator creator = new GuideSetCreator(list);
-			//Console.WriteLine(creator.Sentences[1].ForwardSet[0]);
-			//Console.WriteLine(creator.Sentences[1].ForwardSet[1]);
-			Assert.AreEqual(creator._sentences[2].ForwardSet.Count, 1);
-			Assert.AreEqual(creator._sentences[1].ForwardSet.Count, 1);
-			Assert.AreEqual(creator._sentences[0].ForwardSet.Count, 2);
-			Assert.AreEqual(creator._sentences[1].ForwardSet[0], R21[0]);
-			Assert.AreEqual(creator._sentences[2].ForwardSet[0], R22[0]);
-			Assert.AreEqual(creator._sentences[0].ForwardSet[0], R21[0]);
-			Assert.AreEqual(creator._sentences[0].ForwardSet[1], R22[0]);
+			Assert.AreEqual(creator.Sentences[2].ForwardSet.Count, 1);
+			Assert.AreEqual(creator.Sentences[1].ForwardSet.Count, 1);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet.Count, 2);
+			Assert.AreEqual(creator.Sentences[1].ForwardSet[0], R21[0]);
+			Assert.AreEqual(creator.Sentences[2].ForwardSet[0], R22[0]);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet[0], R21[0]);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet[1], R22[0]);
 		}
 
 		[TestMethod]
@@ -83,8 +81,8 @@ namespace CreatorTests
 			};
 
 			GuideSetCreator creator = new GuideSetCreator(list);
-			Assert.AreEqual(creator._sentences[0].ForwardSet.Count, 1);
-			Assert.AreEqual(creator._sentences[0].ForwardSet[0], R21[2]);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet.Count, 1);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet[0], R21[2]);
 		}
 
 		[TestMethod]
@@ -102,8 +100,8 @@ namespace CreatorTests
 			};
 
 			GuideSetCreator creator = new GuideSetCreator(list);
-			Assert.AreEqual(creator._sentences[0].ForwardSet.Count, 1);
-			Assert.AreEqual(creator._sentences[0].ForwardSet[0], R3[0]);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet.Count, 1);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet[0], R3[0]);
 		}
 
 		[TestMethod]
@@ -123,8 +121,8 @@ namespace CreatorTests
 			};
 
 			GuideSetCreator creator = new GuideSetCreator(list);
-			Assert.AreEqual(creator._sentences[0].ForwardSet.Count, 1);
-			Assert.AreEqual(creator._sentences[0].ForwardSet[0], R4[0]);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet.Count, 1);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet[0], R4[0]);
 		}
 
 		[TestMethod]
@@ -144,8 +142,8 @@ namespace CreatorTests
 			};
 
 			GuideSetCreator creator = new GuideSetCreator(list);
-			Assert.AreEqual(creator._sentences[0].ForwardSet.Count, 1);
-			Assert.AreEqual(creator._sentences[0].ForwardSet[0], R3[1]);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet.Count, 1);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet[0], R3[1]);
 		}
 
 		[TestMethod]
@@ -165,14 +163,14 @@ namespace CreatorTests
 			};
 
 			GuideSetCreator creator = new GuideSetCreator(list);
-			Assert.AreEqual(creator._sentences[0].ForwardSet.Count, 1);
-			Assert.AreEqual(creator._sentences[0].ForwardSet[0], R4[1]);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet.Count, 1);
+			Assert.AreEqual(creator.Sentences[0].ForwardSet[0], R4[1]);
 		}
 
 
-		[TestMethod]
-		public void FinalTest3()
-		{
+		//[TestMethod]
+		//public void FinalTest3()
+		//{
 			//var R1 = new List<string> { "<R2>", "<A>" };
 			//var A1 = new List<string> { "e" };
 			//var A2 = new List<string> { "ay", "<R3>", "<A>" };
@@ -203,23 +201,22 @@ namespace CreatorTests
 			//};
 
 
-			var R1 = new List<string> { "e" };
-			var R2 = new List<string> { "<R4>", "<R1>", "<R3>" };
-			var R3 = new List<string> { "e" };
-			var R4 = new List<string> { "<R3>", "<R4>" };
-			var R4 = new List<string> { "<R3>", "ne" };
+		//	var R1 = new List<string> { "e" };
+		//	var R2 = new List<string> { "<R4>", "<R1>", "<R3>" };
+		//	var R3 = new List<string> { "e" };
+		//	var R4 = new List<string> { "<R3>", "<R4>" };
 
-			var list = new List<Sentence>
-			{
-				new Sentence("<R1>", R1),
-				new Sentence("<R2>", R2),
-				new Sentence("<R3>", R3),
-				new Sentence("<R4>", R4)
-			};
+		//	var list = new List<Sentence>
+		//	{
+		//		new Sentence("<R1>", R1),
+		//		new Sentence("<R2>", R2),
+		//		new Sentence("<R3>", R3),
+		//		new Sentence("<R4>", R4)
+		//	};
 
-			GuideSetCreator creator = new GuideSetCreator(list);
-			Assert.AreEqual(creator._sentences[0].ForwardSet.Count, 1);
-			Assert.AreEqual(creator._sentences[0].ForwardSet[0], R4[1]);
-		}
+		//	GuideSetCreator creator = new GuideSetCreator(list);
+		//	Assert.AreEqual(creator.Sentences[0].ForwardSet.Count, 1);
+		//	Assert.AreEqual(creator.Sentences[0].ForwardSet[0], R4[1]);
+		//}
 	}
 }
