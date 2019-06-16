@@ -14,7 +14,7 @@ namespace SLRTableOfFirstsGenerator
 			{
 				var reader = new SentencesReader(streamReader);
 				var creator = new FirstCreator(reader.Sentences);
-				creator.WriteResultToStream(Console.Out);
+				creator.WriteResult(Console.Out);
 			}
 		}
 	}

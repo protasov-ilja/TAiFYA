@@ -1,5 +1,4 @@
-﻿using SLRTableOfFirstsGenerator.Creator;
-using SLRTableOfFirstsGenerator.Utils;
+﻿using SLRTableOfFirstsGenerator.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,18 +12,13 @@ namespace SLRTableOfFirstsGenerator.Creator
 		const char START_LINK = '<';
 
 		public List<Sentence> Sentences { get; private set; } = new List<Sentence>();
+		public TableOfFirsts TableOfFirsts => _tableOfFirsts;
 
 		private Stack<Token> _stackOfVisited = new Stack<Token>();
-		private Queue<Token> _tokensQueue = new Queue<Token>();
+		private Queue<Cell> _cellsQueue = new Queue<Cell>();
 		private ISet<Token> _setOfVisited = new HashSet<Token>();
 
-		private string _startToken = "";
-
-		private string _TempToken = "";
-
 		private TableOfFirsts _tableOfFirsts = new TableOfFirsts();
-
-		private List<Token> _tempTokensList;
 
 		public FirstCreator(List<RawSentence> sentenses)
 		{
@@ -33,28 +27,43 @@ namespace SLRTableOfFirstsGenerator.Creator
 			Create();
 		}
 
-		public void WriteResultToStream(TextWriter writer)
+		public void WriteResult(TextWriter writer)
 		{
-			//for (var i = 0; i < )
-			//foreach (var s in Sentences)
-			//{
-			//	writer.WriteLine($"{ s.MainToken } -> { TokensToString(s.Tokens, ' ') } / { TokensToString(s.ForwardSet, ',') }");
-			//}
-		}
-
-		private string TokensToString(List<string> list, char delimeter)
-		{
-			var str = "";
-			for (var i = 0; i < list.Count; ++i)
+			foreach (var str in _tableOfFirsts.Column)
 			{
-				str += list[i];
-				if (i < list.Count - 1)
-				{
-					str += delimeter;
-				}
+				writer.Write($"  { str }  | ");
 			}
 
-			return str;
+			writer.WriteLine();
+
+			for (var i = 0; i < _tableOfFirsts.Row.Count; ++i)
+			{
+				foreach (var x in _tableOfFirsts.Row[i].Values)
+				{
+					writer.Write($"{ x.Value } ");
+				}
+
+				writer.Write($"| ");
+
+				foreach (var item in _tableOfFirsts.Table[i])
+				{
+					if (item != null)
+					{
+						foreach (var token in item.Values)
+						{
+							writer.Write($"{ token.Value } ");
+						}
+					}
+					else
+					{
+						writer.Write(" ");
+					}
+
+					writer.Write("| ");
+				}
+
+				writer.WriteLine();
+			}
 		}
 
 		private void CreateHeaderRowOfTable()
@@ -88,74 +97,71 @@ namespace SLRTableOfFirstsGenerator.Creator
 					continue;
 				}
 
+				_setOfVisited.Add(tokens[i]);
 				CreateFirstRowOfTable(tokens[i]);
 			}
 
-			//for (var i = 0; i < Sentences.Count; ++i)
-			//{
+			while (_cellsQueue.Count != 0)
+			{
+				var cell = _cellsQueue.Dequeue();
+				foreach (var item in cell.Values)
+				{
+					_setOfVisited.Add(item);
+				}
 				
+				_tableOfFirsts.ExpandTable(cell);
+				var tokensLists = new List<List<Token>>();
+				foreach (var value in cell.Values)
+				{
+					_stackOfVisited.Push(value);
+					tokensLists.Add(GenerateFirsts(value));
+					_stackOfVisited.Pop();
+				}
 
-			//	var sentence = Sentences[i];
-			//	for (var j = 0; j < sentence.Tokens.Count; ++j)
-			//	{
-			//		var tokens = sentence.Tokens;
-					
-
-					
-			//	}
-
-			//	var token = new Token(sentence.Tokens[0], 0, index);
-			//	if (!_setOfVisited.Contains(token))
-			//	{
-			//		_setOfVisited.Add(token);
-			//		_tokensQueue.Enqueue(token);
-			//	}
-
-			//	_setOfVisited.Add(token);
-			//	if (sentence.Tokens[0].StartsWith(START_LINK))
-			//	{
-			//		_tableOfFirsts.AddInTable(token);
-			//		CountingInDepth(Sentences[i].Tokens[0]);
-			//	}
-			//	else
-			//	{
-			//		_tableOfFirsts.AddInTable(token);
-			//	}
-
-			//	index++;
-			//}
-
+				for (var i = 0; i < tokensLists.Count; ++i)
+				{
+					var cells = CreateListOfCells(tokensLists[i]);
+					var isLast = !(cell.Values[i].ColIndex + 1 < Sentences[cell.Values[i].RowIndex].Tokens.Count);
+					if (isLast)
+					{
+						foreach (var c in cells)
+						{
+							_tableOfFirsts.AddRuleInTable(c, $"[{ cell.Values[i].RowIndex }]");
+						}
+					}
+					else
+					{
+						_tableOfFirsts.AddInTable(cells);
+						AddCellsInQueue(cells);
+					}
+				}
+			}
 
 			var indeXXX = 0;
+		}
 
+		private List<Token> GenerateFirsts(Token token)
+		{
+			var columnIndex = token.ColIndex;
+			var rowIndex = token.RowIndex;
+			var sentence = Sentences[rowIndex];
+			var tokensList = new List<Token>();
+			if (columnIndex + 1 < sentence.Tokens.Count)
+			{
+				tokensList.Add(sentence.Tokens[columnIndex + 1]);
+				if (sentence.Tokens[columnIndex + 1].Type == TokenType.NonTerminal)
+				{
+					_stackOfVisited.Push(sentence.Tokens[columnIndex + 1]);
+					tokensList.AddRange(CountingInDepth(sentence.Tokens[columnIndex + 1]));
+					_stackOfVisited.Pop();
+				}
+			}
+			else
+			{
+				tokensList = ReverseCountInDepth(sentence.MainToken);
+			}
 
-
-
-
-
-			//for (var i = 0; i < Sentences.Count; ++i)
-			//{
-			//	_TempToken = Sentences[i].MainToken;
-
-			//	if (Sentences[i].Tokens[0].StartsWith(START_LINK))
-			//	{
-			//		Sentences[i].AddInSet(CalculateCurrent(Sentences[i].Tokens[0]));
-			//	}
-			//	else if (Sentences[i].Tokens[0] == EMPTY_LINK)
-			//	{
-			//		_stackOfEmpties.Push(i);
-			//		Sentences[i].AddInSet(CalculateEmptyCurrent(Sentences[i].MainToken));
-			//		_stackOfEmpties.Pop();
-			//	}
-			//	else
-			//	{
-			//		Sentences[i].AddInSet(Sentences[i].Tokens[0]);
-			//	}
-			//}
-			//if (Sentences.Count != 0)
-			//{
-			//	Sentences.RemoveAt(Sentences.Count - 1);
-			//}
+			return tokensList;
 		}
 
 		private void CreateFirstRowOfTable(Token token)
@@ -164,16 +170,36 @@ namespace SLRTableOfFirstsGenerator.Creator
 			{
 				_stackOfVisited.Push(token);
 				_tableOfFirsts.ExpandTable( new Cell(new Token("[START]", -1, -1)), true);
-				_tempTokensList = new List<Token>();
 				var tokens = CountingInDepth(token);
 				_stackOfVisited.Pop();
 
 				var cells = CreateListOfCells(tokens);
-				// add tokens in table
+				_tableOfFirsts.AddInTable(cells);
+				AddCellsInQueue(cells);
 			}
 			else
 			{
 				throw new ArgumentException("first token must be non terminal");
+			}
+		}
+
+		private void AddCellsInQueue(List<Cell> cells)
+		{
+			foreach (var cell in cells)
+			{
+				var needToAddInQueue = true;
+				foreach (var value in cell.Values)
+				{
+					if (_setOfVisited.Contains(value))
+					{
+						needToAddInQueue = false;
+					}
+				}
+
+				if (needToAddInQueue)
+				{
+					_cellsQueue.Enqueue(cell);
+				}
 			}
 		}
 
@@ -193,19 +219,6 @@ namespace SLRTableOfFirstsGenerator.Creator
 			return cells;
 		}
 
-		//private bool StackContainToken(string str, int column, int row)
-		//{
-		//	var otherToken = new Token(str, column, row);
-		//	IEnumerable<Token> result = _stackOfEmpties.Where(token => token == otherToken);
-		//	return result.Count() != 0;
-		//}
-
-		//private bool StackContainValue(string str, int column, int row)
-		//{
-		//	IEnumerable<Token> result = _stackOfEmpties.Where(token => token.Value == str);
-		//	return result.Count() != 0;
-		//}
-
 		private List<Token> CountingInDepth(Token token)
 		{
 			var tokensList = new List<Token>();
@@ -214,6 +227,12 @@ namespace SLRTableOfFirstsGenerator.Creator
 			{
 				if (Sentences[i].MainToken != token.Value)
 				{
+					continue;
+				}
+
+				if (Sentences[i].Tokens[0].Value == token.Value)
+				{
+					tokensList.Add(Sentences[i].Tokens[0]);
 					continue;
 				}
 
@@ -233,70 +252,50 @@ namespace SLRTableOfFirstsGenerator.Creator
 			return tokensList;
 		}
 
-		private List<string> ReverseCountInDepth(Token token)
+		private List<Token> ReverseCountInDepth(string value)
 		{
-			return null;
+			var tokensList = new List<Token>();
+			for (var i = 0; i < Sentences.Count; ++i)
+			{
+				var sentence = Sentences[i];
+				if (IsListContainsValue(value, sentence.Tokens))
+				{
+					var tokens = sentence.Tokens;
+					for (var j = 0; j < tokens.Count; ++j)
+					{
+						if (tokens[j].Value == value)
+						{
+							var index = j + 1;
+							if (index < tokens.Count)
+							{
+								if (tokens[index].Type == TokenType.NonTerminal)
+								{
+									_stackOfVisited.Push(tokens[index]);
+									tokensList.AddRange(CountingInDepth(tokens[index]));
+									_stackOfVisited.Pop();
+								}
+								else
+								{
+									tokensList.Add(tokens[index]);
+								}
+							}
+							else
+							{
+								tokensList.AddRange(ReverseCountInDepth(sentence.MainToken));
+							}
+						}
+					}
+				}
+			}
+
+			return tokensList;
 		}
 
+		private bool IsListContainsValue(string value, List<Token> list)
+		{
+			IEnumerable<Token> result = list.Where(token => token.Value == value);
 
-		//private List<string> CalculateEmptyCurrent(string token)
-		//{
-		//	var generatedSet = new List<string>();
-		//	for (var i = 0; i < Sentences.Count; ++i) // search token existence
-		//	{
-		//		if (!_stackOfEmpties.Contains(i) && Sentences[i].Tokens.Contains(token)) // if contains
-		//		{
-		//			var currentIndex = 0;
-		//			while (currentIndex < Sentences[i].Tokens.Count) // search token in tokens
-		//			{
-		//				if (Sentences[i].Tokens[currentIndex] == token) // token found
-		//				{
-		//					var seachedIndex = currentIndex + 1;
-		//					if (seachedIndex < Sentences[i].Tokens.Count) // token not last
-		//					{
-		//						if (Sentences[i].Tokens[seachedIndex].StartsWith(START_LINK)) // is link
-		//						{
-		//							AddInLocalSet(generatedSet, CalculateCurrent(Sentences[i].Tokens[seachedIndex]));
-		//						}
-		//						else // is determinant
-		//						{
-		//							AddInLocalSet(generatedSet, Sentences[i].Tokens[seachedIndex]);
-		//						}
-		//					}
-		//					else // token is last
-		//					{
-		//						_stackOfEmpties.Push(i);
-		//						AddInLocalSet(generatedSet, CalculateEmptyCurrent(Sentences[i].MainToken));
-		//						_stackOfEmpties.Pop();
-		//						if (Sentences[i].MainToken == _startToken)
-		//						{
-		//							AddInLocalSet(generatedSet, END_TOKEN);
-		//						}
-		//					}
-		//				}
-
-		//				++currentIndex;
-		//			}
-		//		}
-		//	}
-
-		//	return generatedSet;
-		//}
-
-		//private void AddInLocalSet(List<string> set, List<string> items)
-		//{
-		//	foreach (var item in items)
-		//	{
-		//		AddInLocalSet(set, item);
-		//	}
-		//}
-
-		//private void AddInLocalSet(List<string> set, string item)
-		//{
-		//	if (!set.Contains(item))
-		//	{
-		//		set.Add(item);
-		//	}
-		//}
+			return result.Count() != 0;
+		}
 	}
 }
