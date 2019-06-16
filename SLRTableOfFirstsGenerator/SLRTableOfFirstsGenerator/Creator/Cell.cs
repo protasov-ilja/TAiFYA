@@ -12,6 +12,8 @@ namespace SLRTableOfFirstsGenerator.Creator
 			set => _values[index] = value;
 		}
 
+		public string Value => _values.Count != 0 ? _values[0].Value : ""; 
+
 		public Cell(Token token)
 		{
 			_values.Add(token);

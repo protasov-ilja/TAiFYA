@@ -1,4 +1,5 @@
-﻿using SLRTableOfFirstsGenerator.Utils;
+﻿using SLRTableOfFirstsGenerator.Creator;
+using SLRTableOfFirstsGenerator.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,8 +13,8 @@ namespace SLRTableOfFirstsGenerator.Creator
 		const char START_LINK = '<';
 
 		public List<Sentence> Sentences { get; private set; } = new List<Sentence>();
-		private Stack<Token> _stackOfEmpties = new Stack<Token>();
 
+		private Stack<Token> _stackOfEmpties = new Stack<Token>();
 		private Queue<Token> _tokensQueue = new Queue<Token>();
 		private ISet<Token> _setOfVisited = new HashSet<Token>();
 
@@ -26,6 +27,7 @@ namespace SLRTableOfFirstsGenerator.Creator
 		public FirstCreator(List<RawSentence> sentenses)
 		{
 			Sentences = SentenceConverter.ConvertRawSentences(sentenses);
+			CreateHeaderRowOfTable();
 			Create();
 		}
 
@@ -56,28 +58,19 @@ namespace SLRTableOfFirstsGenerator.Creator
 		private void CreateHeaderRowOfTable()
 		{
 			foreach (var sentence in Sentences)
-			{
-				if (!_tableOfFirsts.Column.Contains(sentence.MainToken))
-				{
-					_tableOfFirsts.Column.Add(sentence.MainToken);
-				}
-				
+			{	
 				foreach (var token in sentence.Tokens)
 				{
-					if (!_tableOfFirsts.Column.Contains(token))
+					if (!_tableOfFirsts.Column.Contains(token.Value))
 					{
-						_tableOfFirsts.Column.Add(token);
+						_tableOfFirsts.Column.Add(token.Value);
 					}
 				}
 			}
-
-			_tableOfFirsts.Column.Add(END_TOKEN);
 		}
 
 		private void Create()
 		{
-			CreateHeaderRowOfTable();
-			
 			var index = 0;
 			var sentence = Sentences[index];
 			var tokens = sentence.Tokens;
@@ -93,9 +86,8 @@ namespace SLRTableOfFirstsGenerator.Creator
 					continue;
 				}
 
-				CreateFirstRowOfTable(new Token(tokens[i], i, 0));
+				CreateFirstRowOfTable(tokens[i]);
 			}
-
 
 			for (var i = 0; i < Sentences.Count; ++i)
 			{
@@ -166,9 +158,11 @@ namespace SLRTableOfFirstsGenerator.Creator
 
 		private void CreateFirstRowOfTable(Token token)
 		{
-			if (token.Value.StartsWith('<'))
+			if (token.Type == TokenType.NonTerminal)
 			{
-				_tableOfFirsts.ExpandTable();
+				_tableOfFirsts.ExpandTable( new Cell(new Token("[START]", -1, -1)), true);
+				// move in depth
+
 			}
 			else
 			{

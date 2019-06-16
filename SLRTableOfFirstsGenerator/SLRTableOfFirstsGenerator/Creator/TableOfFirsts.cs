@@ -8,6 +8,7 @@ namespace SLRTableOfFirstsGenerator.Creator
 		/// headers of table columns
 		/// </summary>
 		public List<string> Column = new List<string>();
+
 		/// <summary>
 		/// headers of table rows
 		/// </summary>
@@ -17,10 +18,12 @@ namespace SLRTableOfFirstsGenerator.Creator
 		/// Start index
 		/// </summary>
 		public string StartToken => Column.Count > 0 ? Column[0] : "[END]";
+
 		/// <summary>
-		/// table
+		/// table grid
 		/// </summary>
 		public List<List<Cell>> Table { get; } = new List<List<Cell>>();
+
 		private int _currentIndex = 0;
 
 		public void ExpandTable(Cell cell, bool firstCall = false)
@@ -37,8 +40,8 @@ namespace SLRTableOfFirstsGenerator.Creator
 
 		public void AddInTable(Cell cell)
 		{
-			var columnIndex = Column.IndexOf(token.Value);
-			Table[_currentIndex][columnIndex] = token;
+			var columnIndex = Column.IndexOf(cell.Value);
+			Table[_currentIndex][columnIndex] = cell;
 		}
 	} 
 }

@@ -27,8 +27,9 @@
 		/// </summary>
 		public TokenType Type { get; set; }
 
-		public Token(string value, int colIndex, int rowIndex)
+		public Token(string value)
 		{
+			Value = value;
 			if (value.StartsWith(START_LINK))
 			{
 				Type = TokenType.NonTerminal;
@@ -52,8 +53,11 @@
 			{
 				Type = TokenType.Terminal;
 			}
+		}
 
-			Value = value;
+		public Token(string value, int colIndex, int rowIndex)
+			: this(value)
+		{
 			ColIndex = colIndex;
 			RowIndex = rowIndex;
 		}
