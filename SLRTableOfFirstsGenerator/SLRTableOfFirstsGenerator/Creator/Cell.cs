@@ -11,5 +11,15 @@ namespace SLRTableOfFirstsGenerator.Creator
 			get => _values[index];
 			set => _values[index] = value;
 		}
+
+		public Cell(Token token)
+		{
+			_values.Add(token);
+		}
+
+		public Cell(List<Token> token)
+		{
+
+		}
 	}
 }

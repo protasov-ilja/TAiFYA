@@ -5,17 +5,17 @@ namespace SLRTableOfFirstsGenerator.Creator
 	public sealed class Sentence
 	{
 		public string MainToken { get; set; }
-		public List<string> Tokens { get; set; }
+		public List<Token> Tokens { get; set; }
 
-		public Sentence(string main, List<string> tokens)
+		public Sentence(string main, List<Token> tokens)
 		{
 			Tokens = tokens;
 			MainToken = main;
 		}
 
-		public Sentence(string main, string[] tokens)
+		public Sentence(string main, Token[] tokens)
 		{
-			Tokens = new List<string>(tokens);
+			Tokens = new List<Token>(tokens);
 			MainToken = main;
 		}
 	}

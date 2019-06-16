@@ -1,16 +1,15 @@
-﻿using SLRTableOfFirstsGenerator.Creator;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 
 namespace SLRTableOfFirstsGenerator.Utils
 {
 	public sealed class SentencesReader
 	{
-		public List<Sentence> Sentences { get; private set; }
+		public List<RawSentence> Sentences { get; private set; }
 
 		public SentencesReader(StreamReader input)
 		{
-			Sentences = new List<Sentence>();
+			Sentences = new List<RawSentence>();
 			while (!input.EndOfStream)
 			{
 				ParseStringToSentense(input.ReadLine());
@@ -31,7 +30,7 @@ namespace SLRTableOfFirstsGenerator.Utils
 				}
 			}
 
-			Sentences.Add(new Sentence(mainToken, list));
+			Sentences.Add(new RawSentence(mainToken, list));
 		}
 	}
 }

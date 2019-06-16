@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SLRTableOfFirstsGenerator.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,7 +10,6 @@ namespace SLRTableOfFirstsGenerator.Creator
 	{
 		const string END_TOKEN = "[END]";
 		const char START_LINK = '<';
-		const string EMPTY_LINK = "[EPS]";
 
 		public List<Sentence> Sentences { get; private set; } = new List<Sentence>();
 		private Stack<Token> _stackOfEmpties = new Stack<Token>();
@@ -23,10 +23,9 @@ namespace SLRTableOfFirstsGenerator.Creator
 
 		private TableOfFirsts _tableOfFirsts = new TableOfFirsts();
 
-
-		public FirstCreator(List<Sentence> sentenses)
+		public FirstCreator(List<RawSentence> sentenses)
 		{
-			Sentences = sentenses;
+			Sentences = SentenceConverter.ConvertRawSentences(sentenses);
 			Create();
 		}
 
@@ -54,7 +53,7 @@ namespace SLRTableOfFirstsGenerator.Creator
 			return str;
 		}
 
-		private void CreateFirstRowOfTable()
+		private void CreateHeaderRowOfTable()
 		{
 			foreach (var sentence in Sentences)
 			{
@@ -77,20 +76,38 @@ namespace SLRTableOfFirstsGenerator.Creator
 
 		private void Create()
 		{
-			CreateFirstRowOfTable();
-			_startToken = _tableOfFirsts.StartToken;
+			CreateHeaderRowOfTable();
+			
 			var index = 0;
-			_tableOfFirsts.ExpandTable(new Token("END", 0, 0), true);
-			foreach (var sentence in Sentences)
+			var sentence = Sentences[index];
+			var tokens = sentence.Tokens;
+			if (tokens.Count == 0)
 			{
-				if (!(sentence.MainToken == _startToken))
+				throw new ArgumentException($"found empty sentence in row: { index }");
+			}
+
+			for (var i = 0; i < tokens.Count; ++i)
+			{
+				if (tokens[i].Type == TokenType.End)
 				{
-					break;
+					continue;
 				}
 
-				if (sentence.Tokens.Count == 0)
+				CreateFirstRowOfTable(new Token(tokens[i], i, 0));
+			}
+
+
+			for (var i = 0; i < Sentences.Count; ++i)
+			{
+				
+
+				var sentence = Sentences[i];
+				for (var j = 0; j < sentence.Tokens.Count; ++j)
 				{
-					throw new ArgumentException("found empty sentence");
+					var tokens = sentence.Tokens;
+					
+
+					
 				}
 
 				var token = new Token(sentence.Tokens[0], 0, index);
@@ -99,6 +116,7 @@ namespace SLRTableOfFirstsGenerator.Creator
 					_setOfVisited.Add(token);
 					_tokensQueue.Enqueue(token);
 				}
+
 				_setOfVisited.Add(token);
 				if (sentence.Tokens[0].StartsWith(START_LINK))
 				{
@@ -146,6 +164,18 @@ namespace SLRTableOfFirstsGenerator.Creator
 			//}
 		}
 
+		private void CreateFirstRowOfTable(Token token)
+		{
+			if (token.Value.StartsWith('<'))
+			{
+				_tableOfFirsts.ExpandTable();
+			}
+			else
+			{
+				throw new ArgumentException("first token must be non terminal");
+			}
+		}
+
 		private bool StackContainToken(string str, int column, int row)
 		{
 			var otherToken = new Token(str, column, row);
@@ -161,14 +191,22 @@ namespace SLRTableOfFirstsGenerator.Creator
 
 		private List<string> CountingInDepth(Token token)
 		{
-			_stackOfEmpties.Push(token);
 			for (var i = 0; i < Sentences.Count; ++i)
 			{
-				if (Sentences[i].MainToken != token.Value ||   )
+				if (Sentences[i].MainToken != token.Value)
 				{
 					continue;
 				}
 
+				if (Sentences[i].Tokens[0].StartsWith(START_LINK))
+				{
+					_tableOfFirsts.AddInTable(token);
+					CountingInDepth(Sentences[i].Tokens[0]);
+				}
+				else
+				{
+					_tableOfFirsts.AddInTable(token);
+				}
 			}
 
 			var generatedSet = new List<string>();
@@ -205,49 +243,55 @@ namespace SLRTableOfFirstsGenerator.Creator
 			return generatedSet;
 		}
 
-		//private List<string> CalculateEmptyCurrent(string token)
-		//{
-		//	var generatedSet = new List<string>();
-		//	for (var i = 0; i < Sentences.Count; ++i) // search token existence
-		//	{
-		//		if (!_stackOfEmpties.Contains(i) && Sentences[i].Tokens.Contains(token)) // if contains
-		//		{
-		//			var currentIndex = 0;
-		//			while (currentIndex < Sentences[i].Tokens.Count) // search token in tokens
-		//			{
-		//				if (Sentences[i].Tokens[currentIndex] == token) // token found
-		//				{
-		//					var seachedIndex = currentIndex + 1;
-		//					if (seachedIndex < Sentences[i].Tokens.Count) // token not last
-		//					{
-		//						if (Sentences[i].Tokens[seachedIndex].StartsWith(START_LINK)) // is link
-		//						{
-		//							AddInLocalSet(generatedSet, CalculateCurrent(Sentences[i].Tokens[seachedIndex]));
-		//						}
-		//						else // is determinant
-		//						{
-		//							AddInLocalSet(generatedSet, Sentences[i].Tokens[seachedIndex]);
-		//						}
-		//					}
-		//					else // token is last
-		//					{
-		//						_stackOfEmpties.Push(i);
-		//						AddInLocalSet(generatedSet, CalculateEmptyCurrent(Sentences[i].MainToken));
-		//						_stackOfEmpties.Pop();
-		//						if (Sentences[i].MainToken == _startToken)
-		//						{
-		//							AddInLocalSet(generatedSet, END_TOKEN);
-		//						}
-		//					}
-		//				}
+		private List<string> ReverseCountInDepth(Token token)
+		{
 
-		//				++currentIndex;
-		//			}
-		//		}
-		//	}
+		}
 
-		//	return generatedSet;
-		//}
+
+		private List<string> CalculateEmptyCurrent(string token)
+		{
+			var generatedSet = new List<string>();
+			for (var i = 0; i < Sentences.Count; ++i) // search token existence
+			{
+				if (!_stackOfEmpties.Contains(i) && Sentences[i].Tokens.Contains(token)) // if contains
+				{
+					var currentIndex = 0;
+					while (currentIndex < Sentences[i].Tokens.Count) // search token in tokens
+					{
+						if (Sentences[i].Tokens[currentIndex] == token) // token found
+						{
+							var seachedIndex = currentIndex + 1;
+							if (seachedIndex < Sentences[i].Tokens.Count) // token not last
+							{
+								if (Sentences[i].Tokens[seachedIndex].StartsWith(START_LINK)) // is link
+								{
+									AddInLocalSet(generatedSet, CalculateCurrent(Sentences[i].Tokens[seachedIndex]));
+								}
+								else // is determinant
+								{
+									AddInLocalSet(generatedSet, Sentences[i].Tokens[seachedIndex]);
+								}
+							}
+							else // token is last
+							{
+								_stackOfEmpties.Push(i);
+								AddInLocalSet(generatedSet, CalculateEmptyCurrent(Sentences[i].MainToken));
+								_stackOfEmpties.Pop();
+								if (Sentences[i].MainToken == _startToken)
+								{
+									AddInLocalSet(generatedSet, END_TOKEN);
+								}
+							}
+						}
+
+						++currentIndex;
+					}
+				}
+			}
+
+			return generatedSet;
+		}
 
 		//private void AddInLocalSet(List<string> set, List<string> items)
 		//{
