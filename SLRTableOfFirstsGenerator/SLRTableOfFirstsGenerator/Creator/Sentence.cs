@@ -4,7 +4,14 @@ namespace SLRTableOfFirstsGenerator.Creator
 {
 	public sealed class Sentence
 	{
+		/// <summary>
+		/// left side of sentence
+		/// </summary>
 		public string MainToken { get; set; }
+
+		/// <summary>
+		/// right side of sentence
+		/// </summary>
 		public List<Token> Tokens { get; set; }
 
 		public Sentence(string main, List<Token> tokens)
