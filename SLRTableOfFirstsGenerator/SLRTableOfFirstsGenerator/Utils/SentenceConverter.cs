@@ -8,7 +8,7 @@ namespace SLRTableOfFirstsGenerator.Utils
 		public static List<Sentence> ConvertRawSentences(List<RawSentence> rawSentences)
 		{
 			var sentences = new List<Sentence>();
-			sentences.Add(new Sentence("[START]", new List<Token> { new Token("<S>", 0, 0), new Token("[END]", 1, 0) }));
+			sentences.Add(new Sentence("[START]", new List<Token> { new Token($"{ rawSentences[0].MainToken }", 0, 0), new Token("[END]", 1, 0) }));
 			for (var i = 0; i < rawSentences.Count; ++i)
 			{
 				var tokens = new List<Token>();

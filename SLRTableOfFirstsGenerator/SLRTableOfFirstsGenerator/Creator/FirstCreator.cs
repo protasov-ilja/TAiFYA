@@ -9,7 +9,6 @@ namespace SLRTableOfFirstsGenerator.Creator
 	public sealed class FirstCreator
 	{
 		const string END_TOKEN = "[END]";
-		const char START_LINK = '<';
 
 		public List<Sentence> Sentences { get; private set; } = new List<Sentence>();
 		public TableOfFirsts TableOfFirsts => _tableOfFirsts;
