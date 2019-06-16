@@ -231,6 +231,11 @@ namespace SLRTableOfFirstsGenerator.Creator
 
 				if (Sentences[i].Tokens[0].Value == token.Value)
 				{
+					if (_stackOfVisited.Contains(Sentences[i].Tokens[0]))
+					{
+						throw new Exception($"loop detected! { token.Value } { token.ColIndex } { token.RowIndex }");
+					}
+
 					tokensList.Add(Sentences[i].Tokens[0]);
 					continue;
 				}
@@ -269,6 +274,11 @@ namespace SLRTableOfFirstsGenerator.Creator
 							{
 								if (tokens[index].Type == TokenType.NonTerminal)
 								{
+									if (_stackOfVisited.Contains(tokens[index]))
+									{
+										throw new Exception($"loop detected! { tokens[index].Value } { tokens[index].ColIndex } { tokens[index].RowIndex }");
+									}
+
 									_stackOfVisited.Push(tokens[index]);
 									tokensList.AddRange(CountingInDepth(tokens[index]));
 									_stackOfVisited.Pop();
