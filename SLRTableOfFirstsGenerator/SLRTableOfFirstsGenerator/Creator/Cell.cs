@@ -19,9 +19,9 @@ namespace SLRTableOfFirstsGenerator.Creator
 			_values.Add(token);
 		}
 
-		public Cell(List<Token> token)
+		public Cell(List<Token> tokens)
 		{
-
+			_values.AddRange(tokens);
 		}
 	}
 }

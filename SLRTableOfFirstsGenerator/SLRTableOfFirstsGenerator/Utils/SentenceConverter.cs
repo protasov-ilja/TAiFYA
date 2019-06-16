@@ -14,7 +14,7 @@ namespace SLRTableOfFirstsGenerator.Utils
 			for (var i = 0; i < rawSentences.Count; ++i)
 			{
 				var tokens = new List<Token>();
-				for (var j = 0; j < rawSentences[i].Tokens.Count; ++i)
+				for (var j = 0; j < rawSentences[i].Tokens.Count; ++j)
 				{
 					tokens.Add( new Token(rawSentences[i].Tokens[j], j, i + 1) );
 				}

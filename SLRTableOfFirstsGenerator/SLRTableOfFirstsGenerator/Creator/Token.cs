@@ -1,6 +1,8 @@
-﻿namespace SLRTableOfFirstsGenerator.Creator
+﻿using System;
+
+namespace SLRTableOfFirstsGenerator.Creator
 {
-	public sealed class Token
+	public sealed class Token : IEquatable<Token>
 	{
 		const string END_TOKEN = "[END]";
 		const string START_TOKEN = "[START]";
@@ -60,6 +62,23 @@
 		{
 			ColIndex = colIndex;
 			RowIndex = rowIndex;
+		}
+
+		public bool Equals(Token other)
+		{
+			//Check whether the compared object is null. 
+			if (ReferenceEquals(other, null)) return false;
+
+			//Check whether the compared object references the same data. 
+			if (ReferenceEquals(this, other)) return true;
+
+			//Check whether the products' properties are equal. 
+			return Value.Equals(other.Value) && ColIndex.Equals(other.ColIndex) && RowIndex.Equals(other.RowIndex) && Type.Equals(other.Type);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(Value, ColIndex, RowIndex, Type);
 		}
 	}
 }
