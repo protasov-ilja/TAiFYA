@@ -135,8 +135,6 @@ namespace SLRTableOfFirstsGenerator.Creator
 					}
 				}
 			}
-
-			var indeXXX = 0;
 		}
 
 		private List<Token> GenerateFirsts(Token token)
@@ -165,11 +163,13 @@ namespace SLRTableOfFirstsGenerator.Creator
 
 		private void CreateFirstRowOfTable(Token token)
 		{
+			var tokens = new List<Token>();
 			if (token.Type == TokenType.NonTerminal)
 			{
 				_stackOfVisited.Push(token);
 				_tableOfFirsts.ExpandTable( new Cell(new Token("[START]", -1, -1)), true);
-				var tokens = CountingInDepth(token);
+				tokens.Add(token);
+				tokens.AddRange(CountingInDepth(token));
 				_stackOfVisited.Pop();
 
 				var cells = CreateListOfCells(tokens);
